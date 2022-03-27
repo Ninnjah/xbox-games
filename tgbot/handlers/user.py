@@ -9,13 +9,19 @@ from aiohttp.client_exceptions import InvalidURL
 import qbittorrentapi
 
 from tgbot.cb_data import torrent_status
-from tgbot.handlers.inline.user import status_kb
+from tgbot.handlers.inline.user import status_kb, download_kb
 from tgbot.handlers.reply.user import status_reply_kb
 
 logger = logging.getLogger(__name__)
 
 
 async def user_start(m: Message):
+    kb_message = await m.answer(
+        "Загрузка клавиатуры",
+        reply_markup=status_reply_kb()
+    )
+    await kb_message.delete()
+
     await m.answer(
         "Чтобы загрузить игру отправь ссылку на нее с сайта <a href=\"http://xbox-360.org/\">xbox-360.org</a>\n\n"
         "Для проверки прогресса загрузки игр нажми на кнопку \"Прогресс загрузки\" под любой игрой в этом чате, "
@@ -27,7 +33,7 @@ async def user_start(m: Message):
         "⏸ - Приостановлен\n"
         "✅ - Загружен",
         disable_web_page_preview=True,
-        reply_markup=status_reply_kb()
+        reply_markup=download_kb()
     )
 
 
