@@ -140,11 +140,11 @@ async def parse_torrent(m: Message):
 async def check_torrent_progress(callback: CallbackQuery):
     status_emoji = {
         "downloading": "⬇️",
-        "uploading": "⬇️",
-        "stalledUP": "⬇️",
+        "uploading": "✅",
+        "stalledUP": "✅",
         "stalledDL": "🔽",
         "complete": "✅",
-        "queuedUP": "⬇️",
+        "queuedUP": "✅",
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
@@ -176,11 +176,11 @@ async def check_torrent_progress(callback: CallbackQuery):
 async def check_torrent_progress_reply(m: Message):
     status_emoji = {
         "downloading": "⬇️",
-        "uploading": "⬇️",
-        "stalledUP": "⬇️",
+        "uploading": "✅",
+        "stalledUP": "✅",
         "stalledDL": "🔽",
         "complete": "✅",
-        "queuedUP": "⬇️",
+        "queuedUP": "✅",
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
