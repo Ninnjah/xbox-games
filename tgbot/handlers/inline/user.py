@@ -3,12 +3,12 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from tgbot.cb_data import torrent_status
 
 
-def download_kb(url: str) -> InlineKeyboardMarkup:
+def download_kb() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
 
     keyboard.add(
         InlineKeyboardButton(
-            text="Скачать игру", url=url
+            text="Найти игру", url="http://xbox-360.org/"
         )
     )
 
