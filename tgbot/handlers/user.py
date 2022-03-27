@@ -116,7 +116,7 @@ async def parse_torrent(m: Message):
     )
 
 
-async def check_torrent_progress(callback: CallbackQuery, callback_data: Dict[str, str]):
+async def check_torrent_progress(callback: CallbackQuery):
     status_emoji = {
         "downloading": "⬇️",
         "uploading": "⬆️",
