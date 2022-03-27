@@ -1,7 +1,6 @@
 import asyncio
 import re
 import logging
-from typing import Dict
 
 import aiohttp
 from aiogram import Dispatcher
