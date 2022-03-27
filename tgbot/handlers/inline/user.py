@@ -15,13 +15,13 @@ def download_kb(url: str) -> InlineKeyboardMarkup:
     return keyboard
 
 
-def status_kb(hash: str) -> InlineKeyboardMarkup:
+def status_kb(torrent_hash: str) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
 
     keyboard.add(
         InlineKeyboardButton(
             text="Прогресс загрузки",
-            callback_data=torrent_status.new(hash)
+            callback_data=torrent_status.new(torrent_hash)
         )
     )
 
