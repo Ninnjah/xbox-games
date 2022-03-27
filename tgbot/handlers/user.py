@@ -41,6 +41,7 @@ async def parse_torrent(m: Message):
                 # Success
                 if resp.status == 200:
                     content = await resp.text()
+                    logger.info(f"SUCCESS ADD TORRENT: {url}")
 
                 # Not found
                 elif resp.status == 404:
@@ -51,17 +52,17 @@ async def parse_torrent(m: Message):
 
                 # Other errors
                 else:
+                    logger.error(f"RESP STATUS ERROR: {resp.__dict__}")
                     await m.reply(
                         "Во время загрузки данных произошла ошибка"
                     )
-                    logger.error(f"RESP STATUS ERROR: {resp.__dict__}")
 
         # Invalid url
         except InvalidURL:
+            logger.warning(f"InvalidURL: {url}")
             await m.reply(
                 "Не та ссылка. Нужно прислать ссылку с сайта <a href=\"http://xbox-360.org/\">xbox-360.org</a>"
             )
-            logger.warning(f"InvalidURL: {url}")
 
     # Parsing
     # Parse game title
