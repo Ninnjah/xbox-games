@@ -10,8 +10,19 @@ import qbittorrentapi
 
 from tgbot.cb_data import torrent_status
 from tgbot.handlers.inline.user import status_kb
+from tgbot.handlers.reply.user import status_reply_kb
 
 logger = logging.getLogger(__name__)
+
+
+async def user_start(m: Message):
+    await m.answer(
+        "Чтобы загрузить игру отправь ссылку на нее с сайта <a href=\"http://xbox-360.org/\">xbox-360.org</a>\n\n"
+        "Для проверки прогресса загрузки игр нажми на кнопку \"Прогресс загрузки\" под любой игрой в этом чате, "
+        "Либо нажми кнопку \"Прогресс загрузки\" внизу",
+        disable_web_page_preview=True,
+        reply_markup=status_reply_kb()
+    )
 
 
 async def parse_torrent(m: Message):
@@ -145,6 +156,8 @@ async def check_torrent_progress(callback: CallbackQuery):
             "Чтобы добавить отправь ссылку на игру с сайта "
             "<a href=\"http://xbox-360.org/\">xbox-360.org</a>"
         )
+        return
+
     # Generate message
     message = "\n".join(
         f"{status_emoji.get(x.state) if status_emoji.get(x.state) is not None else x.state} "
@@ -153,6 +166,46 @@ async def check_torrent_progress(callback: CallbackQuery):
     await callback.message.answer(message)
 
 
+async def check_torrent_progress_reply(m: Message):
+    status_emoji = {
+        "downloading": "⬇️",
+        "uploading": "⬆️",
+        "stalledUP": "🔼",
+        "stalledDL": "🔽",
+        "complete": "✅",
+        "queuedUP": "🔃",
+        "queuedDL": "🔃",
+        "pausedUP": "✅",
+        "pausedDL": "⏸",
+    }
+    # Init torrent client
+    qbt_client = qbittorrentapi.Client(
+        host='localhost',
+        port=8080,
+    )
+
+    # Find bot torrents
+    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot"]
+    if not torrent:
+        await m.reply(
+            "Ни одного торрента не было добавлено!\n"
+            "Чтобы добавить отправь ссылку на игру с сайта "
+            "<a href=\"http://xbox-360.org/\">xbox-360.org</a>"
+        )
+        return
+
+    # Generate message
+    message = "\n".join(
+        f"{status_emoji.get(x.state) if status_emoji.get(x.state) is not None else x.state} "
+        f"<b>{x.name}</b> - {x.progress * 100:.1f}%" for x in torrent
+    )
+    await m.answer(message)
+
+
 def register_user(dp: Dispatcher):
+    dp.register_message_handler(user_start, commands=["start"])
+    dp.register_message_handler(
+        check_torrent_progress_reply, lambda m: m.text == status_reply_kb().keyboard[0][0].text
+    )
     dp.register_message_handler(parse_torrent, content_types=["text"])
     dp.register_callback_query_handler(check_torrent_progress, torrent_status.filter())
