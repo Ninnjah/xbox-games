@@ -65,6 +65,10 @@ async def parse_torrent(m: Message):
     # Parse game firmware
     search = re.findall(">Прошивка:.+?<br", content)
     firmware = search[0][10:-3].strip() if search else ""
+    if any([x for x in ["freeboot", "jtag"] if x in firmware.lower()]):
+        firmware = f"{firmware}✅"
+    else:
+        firmware = f"{firmware}⚠"
 
     # Parse game torrent url
     search = re.findall('<a target="_blank" href=".*"', content)
@@ -106,7 +110,7 @@ async def parse_torrent(m: Message):
     # Create caption
     message: str = f"{game_name}\n\n" \
                    f"Год выпуска: {age}\n" \
-                   f"Прошивка: {firmware + '✅' if 'freeboot' in firmware.lower() else firmware + '⚠️'}\n\n" \
+                   f"Прошивка: {firmware}\n\n" \
                    f"Добавлена к загрузке!"
 
     # Send message to user
