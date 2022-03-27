@@ -3,7 +3,6 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.contrib.fsm_storage.redis import RedisStorage
 
 from tgbot.config import load_config
 from tgbot.filters.role import RoleFilter, AdminFilter
@@ -27,21 +26,18 @@ async def main():
     logger.error("Starting bot")
     config = load_config("bot.ini")
 
-    if config.tg_bot.use_redis:
-        storage = RedisStorage()
-    else:
-        storage = MemoryStorage()
-    pool = await create_pool(
-        user=config.db.user,
-        password=config.db.password,
-        database=config.db.database,
-        host=config.db.host,
-        echo=False,
-    )
+    storage = MemoryStorage()
+    # pool = await create_pool(
+    #     user=config.db.user,
+    #     password=config.db.password,
+    #     database=config.db.database,
+    #     host=config.db.host,
+    #     echo=False,
+    # )
 
-    bot = Bot(token=config.tg_bot.token)
+    bot = Bot(token=config.tg_bot.token, parse_mode="html")
     dp = Dispatcher(bot, storage=storage)
-    dp.middleware.setup(DbMiddleware(pool))
+    # dp.middleware.setup(DbMiddleware(pool))
     dp.middleware.setup(RoleMiddleware(config.tg_bot.admin_id))
     dp.filters_factory.bind(RoleFilter)
     dp.filters_factory.bind(AdminFilter)
