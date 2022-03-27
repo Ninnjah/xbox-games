@@ -1,13 +1,15 @@
 import asyncio
 import re
 import logging
+from typing import Dict
 
 import aiohttp
-from aiohttp.client_exceptions import InvalidURL
 from aiogram import Dispatcher
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
+from aiohttp.client_exceptions import InvalidURL
 import qbittorrentapi
 
+from tgbot.cb_data import torrent_status
 from tgbot.handlers.inline.user import status_kb
 
 logger = logging.getLogger(__name__)
@@ -114,5 +116,40 @@ async def parse_torrent(m: Message):
     )
 
 
+async def check_torrent_progress(callback: CallbackQuery, callback_data: Dict[str, str]):
+    status_emoji = {
+        "downloading": "⬇️",
+        "uploading": "⬆️",
+        "stalledUP": "🔼",
+        "stalledDL": "🔽",
+        "complete": "✅",
+        "queuedUP": "🔃",
+        "queuedDL": "🔃",
+        "pausedUP": "✅",
+        "pausedDL": "⏸",
+    }
+    # Init torrent client
+    qbt_client = qbittorrentapi.Client(
+        host='localhost',
+        port=8080,
+    )
+
+    # Find bot torrents
+    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot"]
+    if not torrent:
+        await callback.message.reply(
+            "Ни одного торрента не было добавлено!\n"
+            "Чтобы добавить отправь ссылку на игру с сайта "
+            "<a href=\"http://xbox-360.org/\">xbox-360.org</a>"
+        )
+    # Generate message
+    message = "\n".join(
+        f"{status_emoji.get(x.state) if status_emoji.get(x.state) is not None else x.state} "
+        f"<b>{x.name}</b> - {x.progress * 100:.1f}%" for x in torrent
+    )
+    await callback.message.answer(message)
+
+
 def register_user(dp: Dispatcher):
     dp.register_message_handler(parse_torrent, content_types=["text"])
+    dp.register_callback_query_handler(check_torrent_progress, torrent_status.filter())
