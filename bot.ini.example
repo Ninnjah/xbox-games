@@ -4,6 +4,10 @@ admin_id =
 
 [xbox]
 ip_address = 192.168.0.111
+port = 21
+user = xbox
+password = xbox
+games_path = Hdd1:/Content/0000000000000000
 
 [db]
 database = xbox-games.db

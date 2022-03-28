@@ -16,6 +16,10 @@ class TgBot:
 @dataclass
 class Xbox:
     ip_address: str
+    port: int
+    user: str
+    password: str
+    games_path: str
 
 
 @dataclass
@@ -43,5 +47,11 @@ def load_config(path: str):
             admin_id=int(tg_bot["admin_id"])
         ),
         db=DbConfig(**config["db"]),
-        xbox=Xbox(**config["db"]),
+        xbox=Xbox(
+            ip_address=config["xbox"]["ip_address"],
+            port=int(config["xbox"]["port"]),
+            user=config["xbox"]["user"],
+            password=config["xbox"]["password"],
+            games_path=config["xbox"]["games_path"]
+        ),
     )
