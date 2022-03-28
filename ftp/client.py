@@ -10,11 +10,12 @@ logger.setLevel(logging.DEBUG)
 
 
 class FTPClient:
-    def __init__(self, host: str, port: int, user: str, password: str, games_dir: Path):
+    def __init__(self, host: str, port: int, user: str, password: str, games_dir: Path, host_path: Path):
         self.host: str = host
         self.port: int = port
         self.user: str = user
         self.password: str = password
+        self.host_path: Path = host_path
         self.games_dir: Path = games_dir
 
         self.size: int = int()
@@ -22,7 +23,7 @@ class FTPClient:
         self.last_percent: int = int()
 
     def get_files(self, ftp: FTP, path: Path, prev_path: Path = Path("")):
-        path_name: str = str(path).replace(str(self.games_dir), "")
+        path_name: str = str(path).replace(str(self.games_dir), str(self.host_path))
         files: dict = {path_name: []}
         sum_size: int = int()
 
@@ -38,7 +39,6 @@ class FTPClient:
 
         for obj in path.iterdir():
             if obj.is_file():
-                print(f"STOR {path_name}/{obj.name}")
                 name = str(prev_path / obj.name).replace(str(self.games_dir), "")
                 files.get(path_name).append({"name": name, "path": obj})
                 sum_size += obj.stat().st_size
@@ -46,7 +46,11 @@ class FTPClient:
                 self.size = obj.stat().st_size
                 self.block = 0
                 with open(obj, "rb") as f:
-                    ftp.storbinary(f"STOR {path_name}/{obj.name}", f, blocksize=16384, callback=self.upload_progress)
+                    logger.info(f"STOR {str(Path(path_name) / Path(obj.name))}")
+                    ftp.storbinary(
+                        f"STOR {str(Path(path_name) / Path(obj.name))}", f,
+                        blocksize=8192, callback=self.upload_progress
+                    )
 
             else:
                 other_dir = self.get_files(ftp, obj, Path(prev_path / Path(path.name)))
@@ -57,10 +61,10 @@ class FTPClient:
 
     def upload_progress(self, block):
         self.block += len(block)
-        percent = self.block / (self.size * .01)
+        percent = round(self.block / (self.size * .01))
         if self.last_percent != percent:
             self.last_percent = percent
-            logger.debug(f"{self.block} / {self.size} - {self.last_percent:.0f}%")
+            logger.debug(f"{self.block} / {self.size} - {self.last_percent}%")
 
     def upload(self, file_path: Path, dest_path: str):
         with FTP() as ftp:
