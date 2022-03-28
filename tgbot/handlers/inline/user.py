@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from tgbot.cb_data import torrent_status
+from tgbot.cb_data import torrent_status, install_games_cb
 
 
 def main_kb() -> InlineKeyboardMarkup:
@@ -38,6 +38,19 @@ def status_kb() -> InlineKeyboardMarkup:
         InlineKeyboardButton(
             text="⬇️Прогресс загрузки",
             callback_data=torrent_status.new()
+        )
+    )
+
+    return keyboard
+
+
+def install_kb() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+
+    keyboard.add(
+        InlineKeyboardButton(
+            text="Установить загруженные игры",
+            callback_data=install_games_cb.new()
         )
     )
 
