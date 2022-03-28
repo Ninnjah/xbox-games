@@ -9,7 +9,7 @@ from aiohttp.client_exceptions import InvalidURL
 import qbittorrentapi
 
 from tgbot.cb_data import torrent_status
-from tgbot.handlers.inline.user import status_kb
+from tgbot.handlers.inline.user import status_kb, main_kb
 from tgbot.handlers.reply.user import status_reply_kb
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ async def user_start(m: Message):
         "⏸ - Приостановлен\n"
         "✅ - Загружен",
         disable_web_page_preview=True,
-        reply_markup=status_reply_kb()
+        reply_markup=main_kb()
     )
 
 
@@ -133,18 +133,18 @@ async def parse_torrent(m: Message):
     # Send message to user
     await m.answer_photo(
         photo=game_img, caption=message,
-        reply_markup=status_kb(torrent.hash)
+        reply_markup=status_kb()
     )
 
 
 async def check_torrent_progress(callback: CallbackQuery):
     status_emoji = {
         "downloading": "⬇️",
-        "uploading": "⬆️",
-        "stalledUP": "🔼",
+        "uploading": "✅",
+        "stalledUP": "✅",
         "stalledDL": "🔽",
         "complete": "✅",
-        "queuedUP": "🔃",
+        "queuedUP": "✅",
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
@@ -176,11 +176,11 @@ async def check_torrent_progress(callback: CallbackQuery):
 async def check_torrent_progress_reply(m: Message):
     status_emoji = {
         "downloading": "⬇️",
-        "uploading": "⬆️",
-        "stalledUP": "🔼",
+        "uploading": "✅",
+        "stalledUP": "✅",
         "stalledDL": "🔽",
         "complete": "✅",
-        "queuedUP": "🔃",
+        "queuedUP": "✅",
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
