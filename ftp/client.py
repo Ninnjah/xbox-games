@@ -1,4 +1,6 @@
 import os
+import pathlib
+from pathlib import Path
 import logging
 
 from ftplib import FTP, error_perm
@@ -44,3 +46,20 @@ class FTPClient:
             self.block = 0
             with open(file_path, "rb") as f:
                 ftp.storbinary(f"STOR uploaded/{file_path}", f, blocksize=16384, callback=self.upload_progress)
+
+
+def get_files(path: Path):
+    files: dict = {path: []}
+    sum_size: int = int()
+
+    for obj in path.iterdir():
+        if obj.is_file():
+            files.get(path).append(obj)
+            sum_size += obj.stat().st_size
+
+        else:
+            other_dir = get_files(obj)
+            files.get(path).append(other_dir[0])
+            sum_size += other_dir[1]
+
+    return files, sum_size
