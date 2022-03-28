@@ -10,16 +10,50 @@ logger.setLevel(logging.DEBUG)
 
 
 class FTPClient:
-    def __init__(self, host: str, port: int, user: str, password: str, path: str):
+    def __init__(self, host: str, port: int, user: str, password: str, games_dir: Path):
         self.host: str = host
         self.port: int = port
         self.user: str = user
         self.password: str = password
-        self.path: str = path
+        self.games_dir: Path = games_dir
 
         self.size: int = int()
         self.block: int = int()
         self.last_percent: int = int()
+
+    def get_files(self, ftp: FTP, path: Path, prev_path: Path = Path("")):
+        path_name: str = str(path).replace(str(self.games_dir), "")
+        files: dict = {path_name: []}
+        sum_size: int = int()
+
+        print(path_name)
+        try:
+            ftp.mkd(path_name)
+        except error_perm as e:
+            if e.__str__() == "550 File exists.":
+                pass
+            else:
+                logger.error(f"MAKE DIR: {e}")
+                return 1
+
+        for obj in path.iterdir():
+            if obj.is_file():
+                print(f"STOR {path_name}/{obj.name}")
+                name = str(prev_path / obj.name).replace(str(self.games_dir), "")
+                files.get(path_name).append({"name": name, "path": obj})
+                sum_size += obj.stat().st_size
+
+                self.size = obj.stat().st_size
+                self.block = 0
+                with open(obj, "rb") as f:
+                    ftp.storbinary(f"STOR {path_name}/{obj.name}", f, blocksize=16384, callback=self.upload_progress)
+
+            else:
+                other_dir = self.get_files(ftp, obj, Path(prev_path / Path(path.name)))
+                files.get(path_name).append(other_dir[0])
+                sum_size += other_dir[1]
+
+        return files, sum_size
 
     def upload_progress(self, block):
         self.block += len(block)
@@ -28,13 +62,13 @@ class FTPClient:
             self.last_percent = percent
             logger.debug(f"{self.block} / {self.size} - {self.last_percent:.0f}%")
 
-    def upload(self, file_path: str):
+    def upload(self, file_path: Path, dest_path: str):
         with FTP() as ftp:
             ftp.connect(self.host, self.port)
             ftp.login(self.user, self.password)
 
             try:
-                ftp.mkd("uploaded")
+                ftp.mkd(dest_path)
             except error_perm as e:
                 if e.__str__() == "550 File exists.":
                     pass
@@ -42,24 +76,15 @@ class FTPClient:
                     logger.error(f"MAKE DIR: {e}")
                     return 1
 
-            self.size = os.path.getsize(file_path)
+            self.size = file_path.stat().st_size
             self.block = 0
             with open(file_path, "rb") as f:
-                ftp.storbinary(f"STOR uploaded/{file_path}", f, blocksize=16384, callback=self.upload_progress)
+                ftp.storbinary(f"STOR {dest_path}", f, blocksize=16384, callback=self.upload_progress)
 
+    def upload_dir(self):
+        with FTP() as ftp:
+            ftp.connect(self.host, self.port)
+            ftp.login(self.user, self.password)
 
-def get_files(path: Path):
-    files: dict = {path: []}
-    sum_size: int = int()
-
-    for obj in path.iterdir():
-        if obj.is_file():
-            files.get(path).append(obj)
-            sum_size += obj.stat().st_size
-
-        else:
-            other_dir = get_files(obj)
-            files.get(path).append(other_dir[0])
-            sum_size += other_dir[1]
-
-    return files, sum_size
+            for game in self.games_dir.iterdir():
+                self.get_files(ftp, game)
