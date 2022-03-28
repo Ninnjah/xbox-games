@@ -1,6 +1,7 @@
 import asyncio
 import re
 import logging
+from pathlib import Path
 
 import aiohttp
 from aiogram import Dispatcher
@@ -8,9 +9,12 @@ from aiogram.types import Message, CallbackQuery
 from aiohttp.client_exceptions import InvalidURL
 import qbittorrentapi
 
-from tgbot.cb_data import torrent_status
-from tgbot.handlers.inline.user import status_kb, main_kb
+from tgbot.config import load_config
+from tgbot.cb_data import torrent_status, install_games_cb
+from tgbot.handlers.inline.user import status_kb, main_kb, install_kb
 from tgbot.handlers.reply.user import status_reply_kb
+
+from ftp.client import FTPClient
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +152,7 @@ async def check_torrent_progress(callback: CallbackQuery):
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
+        "checkingResumeData": "🕐"
     }
     # Init torrent client
     qbt_client = qbittorrentapi.Client(
@@ -155,8 +160,8 @@ async def check_torrent_progress(callback: CallbackQuery):
         port=8080,
     )
 
-    # Find bot torrents
-    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot"]
+    # Find not installed bot torrents
+    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot" and x.category != "installed"]
     if not torrent:
         await callback.message.reply(
             "Ни одного торрента не было добавлено!\n"
@@ -170,7 +175,7 @@ async def check_torrent_progress(callback: CallbackQuery):
         f"{status_emoji.get(x.state) if status_emoji.get(x.state) is not None else x.state} "
         f"<b>{x.name}</b> - {x.progress * 100:.1f}%" for x in torrent
     )
-    await callback.message.answer(message)
+    await callback.message.answer(message, reply_markup=install_kb())
 
 
 async def check_torrent_progress_reply(m: Message):
@@ -184,6 +189,7 @@ async def check_torrent_progress_reply(m: Message):
         "queuedDL": "🔃",
         "pausedUP": "✅",
         "pausedDL": "⏸",
+        "checkingResumeData": "🕐"
     }
     # Init torrent client
     qbt_client = qbittorrentapi.Client(
@@ -209,6 +215,55 @@ async def check_torrent_progress_reply(m: Message):
     await m.answer(message)
 
 
+async def install_games(callback: CallbackQuery):
+    # Load xbox config
+    xbox = load_config("bot.ini").xbox
+    # Init torrent client
+    qbt_client = qbittorrentapi.Client(
+        host='localhost',
+        port=8080,
+    )
+
+    if "installed" not in qbt_client.torrents_categories():
+        qbt_client.torrents_create_category("installed")
+
+    # Find bot torrents
+    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot" and x.category != "installed"]
+    # Install
+    if torrent:
+        await callback.message.reply("Установка началась")
+        for x in torrent:
+            try:
+                ftp = FTPClient(
+                    xbox.ip_address,
+                    xbox.port,
+                    xbox.user,
+                    xbox.password,
+                    Path(x.content_path),
+                    Path(xbox.games_path)
+                )
+                if x.progress == 1:
+                    ftp.upload_dir()
+
+            except ConnectionResetError as e:
+                logger.error(e)
+                await callback.message.answer("Установка прервана! Было потеряно соединение!")
+                return
+
+            except ConnectionError as e:
+                logger.error(e)
+                await callback.message.answer("Ошибка соединения!")
+                return
+
+            qbt_client.torrents_set_category("installed", x.hash)
+            await callback.message.answer(f"{x.name} установлена")
+
+        await callback.message.answer("Все игры установлены")
+
+    else:
+        await callback.message.reply("Игры еще не скачались :(")
+
+
 def register_user(dp: Dispatcher):
     dp.register_message_handler(user_start, commands=["start"])
     dp.register_message_handler(
@@ -216,3 +271,4 @@ def register_user(dp: Dispatcher):
     )
     dp.register_message_handler(parse_torrent, content_types=["text"])
     dp.register_callback_query_handler(check_torrent_progress, torrent_status.filter())
+    dp.register_callback_query_handler(install_games, install_games_cb.filter())
