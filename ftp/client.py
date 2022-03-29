@@ -1,12 +1,9 @@
-import os
-import pathlib
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from ftplib import FTP, error_perm
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class FTPClient:
@@ -23,18 +20,17 @@ class FTPClient:
         self.last_percent: int = int()
 
     def get_files(self, ftp: FTP, path: Path, prev_path: Path = Path("")):
-        path_name: str = str(path).replace(str(self.games_dir), str(self.host_path))
+        path_name: str = str(path).replace(str(self.games_dir), "")[1:]
         files: dict = {path_name: []}
         sum_size: int = int()
 
-        print(path_name)
         try:
             ftp.mkd(path_name)
         except error_perm as e:
-            if e.__str__() == "550 File exists.":
+            if "File exists" in e.__str__():
                 pass
             else:
-                logger.error(f"MAKE DIR: {e}")
+                logger.error(f"MAKE DIR \"{path_name}\": {e}")
                 return 1
 
         for obj in path.iterdir():
@@ -89,6 +85,7 @@ class FTPClient:
         with FTP() as ftp:
             ftp.connect(self.host, self.port)
             ftp.login(self.user, self.password)
+            ftp.cwd(str(self.host_path))
 
             for game in self.games_dir.iterdir():
                 self.get_files(ftp, game)
