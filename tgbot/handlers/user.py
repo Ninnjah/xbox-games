@@ -112,7 +112,7 @@ async def parse_torrent(m: Message):
         host='localhost',
         port=8080,
     )
-    if "installed" not in qbt_client.torrents_categories():
+    if "for_install" not in qbt_client.torrents_categories():
         qbt_client.torrents_create_category("for_install")
 
     # Add torrent to download
