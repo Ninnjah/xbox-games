@@ -112,6 +112,8 @@ async def parse_torrent(m: Message):
         host='localhost',
         port=8080,
     )
+    if "installed" not in qbt_client.torrents_categories():
+        qbt_client.torrents_create_category("for_install")
 
     # Add torrent to download
     r = qbt_client.torrents.add(urls=game_url, tags="bot", rename=game_name)
@@ -127,6 +129,8 @@ async def parse_torrent(m: Message):
 
     # Find game torrent
     torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot" and x.name == game_name][0]
+    if any([x for x in ["freeboot", "jtag"] if x in firmware.lower()]):
+        qbt_client.torrents_set_category("for_install", torrent.hash)
 
     # Create caption
     message: str = f"{game_name}\n\n" \
@@ -228,22 +232,28 @@ async def install_games(callback: CallbackQuery):
         qbt_client.torrents_create_category("installed")
 
     # Find bot torrents
-    torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot" and x.category != "installed"]
+    torrent = [
+        x for x in qbt_client.torrents_info()
+        if x.tags == "bot" and x.category != "installed" and x.category == "for_install"
+    ]
     # Install
     if torrent:
         await callback.message.reply("Установка началась")
         for x in torrent:
             try:
-                ftp = FTPClient(
-                    xbox.ip_address,
-                    xbox.port,
-                    xbox.user,
-                    xbox.password,
-                    Path(x.content_path),
-                    Path(xbox.games_path)
-                )
                 if x.progress == 1:
-                    ftp.upload_dir()
+                    ftp = FTPClient(
+                        xbox.ip_address,
+                        xbox.port,
+                        xbox.user,
+                        xbox.password,
+                        Path(x.content_path),
+                        Path(xbox.games_path)
+                    )
+                    err = ftp.upload_dir()
+                    if err == 1:
+                        await callback.message.reply(f"При установке {x.name} произошла ошибка")
+                        continue
 
             except ConnectionResetError as e:
                 logger.error(e)
