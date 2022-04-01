@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 import re
 import logging
 from pathlib import Path
@@ -115,8 +116,15 @@ async def parse_torrent(m: Message):
     if "for_install" not in qbt_client.torrents_categories():
         qbt_client.torrents_create_category("for_install")
 
+    # Load tg_bot config
+    tg_bot = load_config("bot.ini").tg_bot
     # Add torrent to download
-    r = qbt_client.torrents.add(urls=game_url, tags="bot", rename=game_name)
+    r = qbt_client.torrents.add(
+        urls=game_url,
+        tags="bot",
+        rename=game_name,
+        save_path=tg_bot.torrent_path,
+    )
     # Success
     if r == "Ok.":
         await asyncio.sleep(5)
