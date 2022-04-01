@@ -1,6 +1,7 @@
 [tg_bot]
 token =
 admin_id =
+torrent_path =
 
 [xbox]
 ip_address = 192.168.0.111

@@ -1,5 +1,6 @@
 import configparser
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -11,6 +12,7 @@ class DbConfig:
 class TgBot:
     token: str
     admin_id: int
+    torrent_path: Optional[str] = None
 
 
 @dataclass
@@ -44,7 +46,8 @@ def load_config(path: str):
     return Config(
         tg_bot=TgBot(
             token=tg_bot["token"],
-            admin_id=int(tg_bot["admin_id"])
+            admin_id=int(tg_bot["admin_id"]),
+            torrent_path=tg_bot["torrent_path"] if tg_bot["torrent_path"] != "" else None
         ),
         db=DbConfig(**config["db"]),
         xbox=Xbox(
