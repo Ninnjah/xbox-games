@@ -137,6 +137,10 @@ async def parse_torrent(m: Message):
 
     # Find game torrent
     torrent = [x for x in qbt_client.torrents_info() if x.tags == "bot" and x.name == game_name][0]
+
+    with open(os.path.join(tg_bot.torrent_path, "torrent-magnets.txt"), "a+", encoding="utf-8") as f:
+        f.write(f"{torrent.magnet_uri}\n")
+
     if any([x for x in ["freeboot", "jtag"] if x in firmware.lower()]):
         qbt_client.torrents_set_category("for_install", torrent.hash)
 
