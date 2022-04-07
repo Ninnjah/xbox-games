@@ -76,6 +76,13 @@ async def parse_torrent(m: Message):
             )
 
     # Parsing
+    # Parse game torrent url
+    search = re.findall('<a target="_blank" href=".*"', content)
+    game_url = search[0][25:-1].strip() if search else ""
+    if not game_url:
+        await m.reply("Этой игры нет на Xbox 360")
+        return
+
     # Parse game title
     search = re.findall(">Название:.+?<br", content)
     game_name = search[0][10:-3].strip() if search else ""
@@ -91,11 +98,6 @@ async def parse_torrent(m: Message):
         firmware = f"{firmware}✅"
     else:
         firmware = f"{firmware}⚠"
-
-    # Parse game torrent url
-    search = re.findall('<a target="_blank" href=".*"', content)
-    game_url = search[0][25:-1].strip() if search else ""
-    print(game_url)
 
     # Parse game image first block
     search = re.findall('<div style="text-align:center;">.*?<img src=".*?"', content)
