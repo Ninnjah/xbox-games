@@ -95,6 +95,7 @@ async def parse_torrent(m: Message):
     # Parse game torrent url
     search = re.findall('<a target="_blank" href=".*"', content)
     game_url = search[0][25:-1].strip() if search else ""
+    print(game_url)
 
     # Parse game image first block
     search = re.findall('<div style="text-align:center;">.*?<img src=".*?"', content)
@@ -132,7 +133,7 @@ async def parse_torrent(m: Message):
     # Fail
     else:
         await m.reply("При добавлении торрента произошла ошибка!")
-        logger.error(r.__dict__)
+        logger.error(f"Add torrent {r}")
         return
 
     # Find game torrent
