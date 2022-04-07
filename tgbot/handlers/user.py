@@ -52,7 +52,7 @@ async def parse_torrent(m: Message):
                 # Success
                 if resp.status == 200:
                     content = await resp.text()
-                    logger.info(f"SUCCESS ADD TORRENT: {url}")
+                    logger.info(f"SUCCESS GET TORRENT: {url}")
 
                 # Not found
                 elif resp.status == 404:
@@ -81,6 +81,7 @@ async def parse_torrent(m: Message):
     game_url = search[0][25:-1].strip() if search else ""
     if not game_url:
         await m.reply("Этой игры нет на Xbox 360")
+        logger.info(f"TORRENT NOT EXISTS: {url}")
         return
 
     # Parse game title
@@ -130,6 +131,7 @@ async def parse_torrent(m: Message):
     )
     # Success
     if r == "Ok.":
+        logger.info(f"ADD TORRENT SUCCESS: {url}")
         await asyncio.sleep(5)
 
     # Fail
