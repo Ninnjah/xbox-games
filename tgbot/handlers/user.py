@@ -267,6 +267,9 @@ async def install_games(callback: CallbackQuery):
                         await callback.message.reply(f"При установке {x.name} произошла ошибка")
                         continue
 
+                    elif err == 2:
+                        raise ConnectionError
+
             except ConnectionResetError as e:
                 logger.error(e)
                 await callback.message.answer("Установка прервана! Было потеряно соединение!")

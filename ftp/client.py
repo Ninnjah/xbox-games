@@ -83,9 +83,15 @@ class FTPClient:
 
     def upload_dir(self):
         with FTP() as ftp:
-            ftp.connect(self.host, self.port)
-            ftp.login(self.user, self.password)
-            ftp.cwd(str(self.host_path))
+            try:
+                ftp.connect(self.host, self.port)
 
-            for game in self.games_dir.iterdir():
-                self.get_files(ftp, game)
+            except TimeoutError:
+                return 2
+
+            else:
+                ftp.login(self.user, self.password)
+                ftp.cwd(str(self.host_path))
+
+                for game in self.games_dir.iterdir():
+                    self.get_files(ftp, game)
